@@ -66,16 +66,27 @@ def get_listings():
             headers = {
                 "accept": "application/json",
                 "Authorization": f"Bearer {API_KEY}",  # Include your API key here
-            "User-Agent": "Mozilla/5.0"
-        }
-        
-        response = requests.get(f"{BASE_API_URL}/listings", headers=headers, params={"collectionName": COLLECTION_NAME, "type": "buyNow", "limit": 20})
-        response.raise_for_status()  # Raise exception for bad status codes
-        
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        logging.error(f"Error fetching listings: {e}")
-        return None
+                "User-Agent": "Mozilla/5.0"
+            }
+            
+            response = requests.get(
+                f"{BASE_API_URL}/listings",
+                headers=headers,
+                params={"collectionName": COLLECTION_NAME, "type": "buyNow", "limit": 20}
+            )
+            
+            if response.status_code == 429:  # Rate limit exceeded
+                logging.warning("Rate limit exceeded. Waiting before retrying...")
+                time.sleep(wait_time)  # Wait for the current wait time
+                wait_time = min(wait_time * 2, 60)  # Exponentially increase wait time, max 60 seconds
+                continue  # Retry the request
+            
+            response.raise_for_status()  # Raise exception for bad status codes
+            
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            logging.error(f"Error fetching listings: {e}")
+            return None
 
 def get_activities():
     try:
