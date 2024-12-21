@@ -19,6 +19,7 @@ TWITTER_ACCESS_TOKEN_SECRET = os.environ.get('TWITTER_ACCESS_TOKEN_SECRET')
 # Magic Eden API
 BASE_API_URL = "https://api-mainnet.magiceden.dev/v2/ord"
 COLLECTION_NAME = "fukuhedrons"
+API_KEY = os.environ.get('MAGIC_EDEN_API_KEY')  # Ensure you set this in your environment variables
 
 def setup_twitter():
     try:
@@ -39,14 +40,11 @@ def get_sales():
         try:
             headers = {
                 "accept": "application/json",
+                "Authorization": f"Bearer {API_KEY}",  # Include your API key here
                 "User-Agent": "Mozilla/5.0"
             }
             
-            # Check the endpoint being used
-            url = f"{BASE_API_URL}/sales"
-            logging.info(f"Requesting URL: {url} with params: {{'collectionName': '{COLLECTION_NAME}', 'limit': 20}}")
-            
-            response = requests.get(url, headers=headers, params={"collectionName": COLLECTION_NAME, "limit": 20})
+            response = requests.get(f"{BASE_API_URL}/sales", headers=headers, params={"collectionName": COLLECTION_NAME, "limit": 20})
             
             if response.status_code == 404:  # Not Found
                 logging.error("Endpoint not found. Please check the URL and parameters.")
@@ -71,10 +69,15 @@ def get_listings():
         try:
             headers = {
                 "accept": "application/json",
+                "Authorization": f"Bearer {API_KEY}",  # Include your API key here
                 "User-Agent": "Mozilla/5.0"
             }
             
             response = requests.get(f"{BASE_API_URL}/listings", headers=headers, params={"collectionName": COLLECTION_NAME, "type": "buyNow", "limit": 20})
+            
+            if response.status_code == 404:  # Not Found
+                logging.error("Endpoint not found. Please check the URL and parameters.")
+                return None
             
             if response.status_code == 429:  # Rate limit exceeded
                 logging.warning("Rate limit exceeded. Waiting before retrying...")
@@ -95,10 +98,15 @@ def get_activities():
         try:
             headers = {
                 "accept": "application/json",
+                "Authorization": f"Bearer {API_KEY}",  # Include your API key here
                 "User-Agent": "Mozilla/5.0"
             }
             
             response = requests.get(f"{BASE_API_URL}/activities", headers=headers, params={"collectionName": COLLECTION_NAME, "limit": 20})
+            
+            if response.status_code == 404:  # Not Found
+                logging.error("Endpoint not found. Please check the URL and parameters.")
+                return None
             
             if response.status_code == 429:  # Rate limit exceeded
                 logging.warning("Rate limit exceeded. Waiting before retrying...")
