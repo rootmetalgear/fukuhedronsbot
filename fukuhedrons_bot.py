@@ -10,7 +10,7 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-# API Credentials
+# API Credentials for Twitter
 TWITTER_API_KEY = os.environ.get('TWITTER_API_KEY')
 TWITTER_API_SECRET = os.environ.get('TWITTER_API_SECRET')
 TWITTER_ACCESS_TOKEN = os.environ.get('TWITTER_ACCESS_TOKEN')
@@ -19,10 +19,6 @@ TWITTER_ACCESS_TOKEN_SECRET = os.environ.get('TWITTER_ACCESS_TOKEN_SECRET')
 # Magic Eden API
 BASE_API_URL = "https://api-mainnet.magiceden.dev/v2/ord"
 COLLECTION_NAME = "fukuhedrons"
-API_KEY = os.environ.get('MAGIC_EDEN_API_KEY')
-
-if not API_KEY:
-    logging.error("Magic Eden API key is not set!")
 
 def setup_twitter():
     try:
@@ -43,7 +39,6 @@ def get_sales():
         try:
             headers = {
                 "accept": "application/json",
-                "Authorization": f"Bearer {API_KEY}",  # Include your API key here
                 "User-Agent": "Mozilla/5.0"
             }
             
@@ -68,15 +63,10 @@ def get_listings():
         try:
             headers = {
                 "accept": "application/json",
-                "Authorization": f"Bearer {API_KEY}",  # Include your API key here
                 "User-Agent": "Mozilla/5.0"
             }
             
-            response = requests.get(
-                f"{BASE_API_URL}/listings",
-                headers=headers,
-                params={"collectionName": COLLECTION_NAME, "type": "buyNow", "limit": 20}
-            )
+            response = requests.get(f"{BASE_API_URL}/listings", headers=headers, params={"collectionName": COLLECTION_NAME, "type": "buyNow", "limit": 20})
             
             if response.status_code == 429:  # Rate limit exceeded
                 logging.warning("Rate limit exceeded. Waiting before retrying...")
@@ -92,20 +82,28 @@ def get_listings():
             return None
 
 def get_activities():
-    try:
-        headers = {
-            "accept": "application/json",
-            "Authorization": f"Bearer {API_KEY}",
-            "User-Agent": "Mozilla/5.0"
-        }
-        
-        response = requests.get(f"{BASE_API_URL}/activities", headers=headers, params={"collectionName": COLLECTION_NAME, "limit": 20})
-        response.raise_for_status()  # Raise exception for bad status codes
-        
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        logging.error(f"Error fetching activities: {e}")
-        return None
+    wait_time = 1  # Start with a 1 second wait time
+    while True:
+        try:
+            headers = {
+                "accept": "application/json",
+                "User-Agent": "Mozilla/5.0"
+            }
+            
+            response = requests.get(f"{BASE_API_URL}/activities", headers=headers, params={"collectionName": COLLECTION_NAME, "limit": 20})
+            
+            if response.status_code == 429:  # Rate limit exceeded
+                logging.warning("Rate limit exceeded. Waiting before retrying...")
+                time.sleep(wait_time)  # Wait for the current wait time
+                wait_time = min(wait_time * 2, 60)  # Exponentially increase wait time, max 60 seconds
+                continue  # Retry the request
+            
+            response.raise_for_status()  # Raise exception for bad status codes
+            
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            logging.error(f"Error fetching activities: {e}")
+            return None
 
 def format_tweet(sale):
     try:
@@ -120,11 +118,10 @@ def format_tweet(sale):
         return None
 
 def main():
-    # Check if environment variables are set
+    # Check if Twitter API credentials are set
     if not all([TWITTER_API_KEY, TWITTER_API_SECRET, 
-                TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_TOKEN_SECRET, 
-                API_KEY]):
-        logging.error("Missing API credentials!")
+                TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_TOKEN_SECRET]):
+        logging.error("Missing Twitter API credentials!")
         return
 
     twitter_api = setup_twitter()
