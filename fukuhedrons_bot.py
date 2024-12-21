@@ -17,7 +17,7 @@ TWITTER_ACCESS_TOKEN = os.environ.get('TWITTER_ACCESS_TOKEN')
 TWITTER_ACCESS_TOKEN_SECRET = os.environ.get('TWITTER_ACCESS_TOKEN_SECRET')
 
 # Magic Eden API
-ME_API_URL = "https://api-mainnet.magiceden.dev/v2/ordinals/activities"
+ME_API_URL = "https://api-mainnet.magiceden.dev/v2/ord"
 COLLECTION_NAME = "fukuhedrons"
 
 def setup_twitter():
@@ -110,4 +110,4 @@ def main():
             time.sleep(60)  # Wait longer on error
 
 if __name__ == "__main__":
-    main()
+    main() 
