@@ -1,0 +1,53 @@
+import requests
+from bs4 import BeautifulSoup
+import logging
+
+# Setup logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+def scrape_fukuhedrons_sales():
+    url = "https://magiceden.io/ordinals/marketplace/fukuhedrons"  # Replace with the actual URL of the collection
+    sales_data = []
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Raise an error for bad responses
+        logging.info("Successfully fetched the sales page.")
+
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        # Example: Find current sales data
+        for item in soup.select('.some-current-sales-selector'):  # Replace with actual selector
+            price = item.select_one('.price-selector').text  # Replace with actual selector
+            inscription_id = item.select_one('.inscription-id-selector').text  # Replace with actual selector
+            sales_data.append({
+                'price': price,
+                'inscription_id': inscription_id,
+                'type': 'current'
+            })
+
+        # Example: Find historical sales data
+        for item in soup.select('.some-historical-sales-selector'):  # Replace with actual selector
+            price = item.select_one('.price-selector').text  # Replace with actual selector
+            inscription_id = item.select_one('.inscription-id-selector').text  # Replace with actual selector
+            sales_data.append({
+                'price': price,
+                'inscription_id': inscription_id,
+                'type': 'historical'
+            })
+
+        logging.info(f"Scraped {len(sales_data)} sales records.")
+        return sales_data
+
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Error fetching sales data: {e}")
+        return None
+
+# Run the scraper
+if __name__ == "__main__":
+    sales = scrape_fukuhedrons_sales()
+    if sales:
+        for sale in sales:
+            print(f"Type: {sale['type']}, Price: {sale['price']}, Inscription ID: {sale['inscription_id']}")
+    else:
+        logging.error("No sales data found or an error occurred.")
