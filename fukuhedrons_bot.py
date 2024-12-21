@@ -21,6 +21,9 @@ BASE_API_URL = "https://api-mainnet.magiceden.dev/v2/ord"
 COLLECTION_NAME = "fukuhedrons"
 API_KEY = os.environ.get('MAGIC_EDEN_API_KEY')
 
+if not API_KEY:
+    logging.error("Magic Eden API key is not set!")
+
 def setup_twitter():
     try:
         auth = tweepy.OAuthHandler(TWITTER_API_KEY, TWITTER_API_SECRET)
