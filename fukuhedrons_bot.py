@@ -42,7 +42,11 @@ def get_sales():
                 "User-Agent": "Mozilla/5.0"
             }
             
-            response = requests.get(f"{BASE_API_URL}/sales", headers=headers, params={"collectionName": COLLECTION_NAME, "limit": 20})
+            # Check the endpoint being used
+            url = f"{BASE_API_URL}/sales"
+            logging.info(f"Requesting URL: {url} with params: {{'collectionName': '{COLLECTION_NAME}', 'limit': 20}}")
+            
+            response = requests.get(url, headers=headers, params={"collectionName": COLLECTION_NAME, "limit": 20})
             
             if response.status_code == 404:  # Not Found
                 logging.error("Endpoint not found. Please check the URL and parameters.")
