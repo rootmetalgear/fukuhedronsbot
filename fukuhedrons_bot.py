@@ -1,7 +1,3 @@
-
-### Updated `fukuhedrons_twitter_bot.py`
-
-```python
 import tweepy
 import requests
 import time
@@ -44,7 +40,6 @@ def get_sales():
             "User-Agent": "Mozilla/5.0"
         }
         
-        # Example: Fetching recent activities
         response = requests.get(f"{BASE_API_URL}/activities", headers=headers, params={"collectionName": COLLECTION_NAME, "limit": 20})
         response.raise_for_status()  # Raise exception for bad status codes
         
@@ -143,4 +138,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-```
