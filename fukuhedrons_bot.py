@@ -19,6 +19,7 @@ TWITTER_ACCESS_TOKEN_SECRET = os.environ.get('TWITTER_ACCESS_TOKEN_SECRET')
 # Magic Eden API
 BASE_API_URL = "https://api-mainnet.magiceden.dev/v2/ord"
 COLLECTION_NAME = "fukuhedrons"
+API_KEY = os.environ.get('MAGIC_EDEN_API_KEY')
 
 def setup_twitter():
     try:
@@ -34,29 +35,40 @@ def setup_twitter():
         return None
 
 def get_sales():
-    try:
-        headers = {
-            "accept": "application/json",
-            "User-Agent": "Mozilla/5.0"
-        }
-        
-        # Fetch recent sales for the Fukuhedrons collection
-        response = requests.get(f"{BASE_API_URL}/sales", headers=headers, params={"collectionName": COLLECTION_NAME, "limit": 20})
-        response.raise_for_status()  # Raise exception for bad status codes
-        
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        logging.error(f"Error fetching sales: {e}")
-        return None
+    wait_time = 1  # Start with a 1 second wait time
+    while True:
+        try:
+            headers = {
+                "accept": "application/json",
+                "Authorization": f"Bearer {API_KEY}",  # Include your API key here
+                "User-Agent": "Mozilla/5.0"
+            }
+            
+            response = requests.get(f"{BASE_API_URL}/sales", headers=headers, params={"collectionName": COLLECTION_NAME, "limit": 20})
+            
+            if response.status_code == 429:  # Rate limit exceeded
+                logging.warning("Rate limit exceeded. Waiting before retrying...")
+                time.sleep(wait_time)  # Wait for the current wait time
+                wait_time = min(wait_time * 2, 60)  # Exponentially increase wait time, max 60 seconds
+                continue  # Retry the request
+            
+            response.raise_for_status()  # Raise exception for bad status codes
+            
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            logging.error(f"Error fetching sales: {e}")
+            return None
 
 def get_listings():
-    try:
-        headers = {
-            "accept": "application/json",
+    wait_time = 1  # Start with a 1 second wait time
+    while True:
+        try:
+            headers = {
+                "accept": "application/json",
+                "Authorization": f"Bearer {API_KEY}",  # Include your API key here
             "User-Agent": "Mozilla/5.0"
         }
         
-        # Fetch current listings for the Fukuhedrons collection
         response = requests.get(f"{BASE_API_URL}/listings", headers=headers, params={"collectionName": COLLECTION_NAME, "type": "buyNow", "limit": 20})
         response.raise_for_status()  # Raise exception for bad status codes
         
@@ -69,10 +81,10 @@ def get_activities():
     try:
         headers = {
             "accept": "application/json",
+            "Authorization": f"Bearer {API_KEY}",
             "User-Agent": "Mozilla/5.0"
         }
         
-        # Fetch recent activities for the Fukuhedrons collection
         response = requests.get(f"{BASE_API_URL}/activities", headers=headers, params={"collectionName": COLLECTION_NAME, "limit": 20})
         response.raise_for_status()  # Raise exception for bad status codes
         
@@ -96,8 +108,9 @@ def format_tweet(sale):
 def main():
     # Check if environment variables are set
     if not all([TWITTER_API_KEY, TWITTER_API_SECRET, 
-                TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_TOKEN_SECRET]):
-        logging.error("Missing Twitter API credentials!")
+                TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_TOKEN_SECRET, 
+                API_KEY]):
+        logging.error("Missing API credentials!")
         return
 
     twitter_api = setup_twitter()
