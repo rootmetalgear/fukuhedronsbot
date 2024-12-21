@@ -34,8 +34,10 @@ def setup_twitter():
         logging.error(f"Twitter authentication failed: {e}")
         return None
 
-def get_sales():
+def fetch_sales_data():
     wait_time = 1  # Start with a 1 second wait time
+    sales_data = []
+    
     while True:
         try:
             headers = {
@@ -44,7 +46,11 @@ def get_sales():
                 "User-Agent": "Mozilla/5.0"
             }
             
-            response = requests.get(f"{BASE_API_URL}/sales", headers=headers, params={"collectionName": COLLECTION_NAME, "limit": 20})
+            # Construct the URL for sales data
+            url = f"{BASE_API_URL}/sales"
+            logging.info(f"Requesting URL: {url} with params: {{'collectionName': '{COLLECTION_NAME}', 'limit': 100}}")
+            
+            response = requests.get(url, headers=headers, params={"collectionName": COLLECTION_NAME, "limit": 100})
             
             if response.status_code == 404:  # Not Found
                 logging.error("Endpoint not found. Please check the URL and parameters.")
@@ -58,10 +64,19 @@ def get_sales():
             
             response.raise_for_status()  # Raise exception for bad status codes
             
-            return response.json()
+            sales_data.extend(response.json())  # Add the fetched sales data
+            
+            # Check if there are more sales to fetch (if pagination is supported)
+            if len(response.json()) < 100:  # Assuming 100 is the limit set
+                break  # Exit the loop if no more sales are available
+            
+            wait_time = 1  # Reset wait time after a successful request
+            
         except requests.exceptions.RequestException as e:
             logging.error(f"Error fetching sales: {e}")
             return None
+    
+    return sales_data
 
 def get_listings():
     wait_time = 1  # Start with a 1 second wait time
@@ -151,12 +166,12 @@ def main():
     while True:
         try:
             # You can choose which function to call based on your needs
-            sales = get_sales()  # Fetch sales data
+            sales_data = fetch_sales_data()
             # sales = get_listings()  # Uncomment to fetch listings
             # sales = get_activities()  # Uncomment to fetch activities
             
-            if sales:
-                for sale in sales:
+            if sales_data:
+                for sale in sales_data:
                     sale_id = sale.get('signature')
                     
                     if sale_id and sale_id not in processed_sales:
