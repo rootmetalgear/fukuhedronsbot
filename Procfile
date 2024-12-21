@@ -1,0 +1,1 @@
+worker: python fukuhedrons_bot.py
