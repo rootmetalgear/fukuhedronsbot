@@ -3,6 +3,7 @@ import requests
 import time
 import os
 import logging
+from bs4 import BeautifulSoup
 
 # Setup logging
 logging.basicConfig(
@@ -34,54 +35,30 @@ def setup_twitter():
         logging.error(f"Twitter authentication failed: {e}")
         return None
 
-def fetch_sales_data():
-    wait_time = 1  # Start with a 1 second wait time
+def scrape_fukuhedrons_sales():
+    url = "https://magiceden.io/ordinals/marketplace/fukuhedrons"  # Replace with the actual URL of the collection
     sales_data = []
-    offset = 0  # Initialize offset for pagination
-    limit = 100  # Set the limit to the maximum allowed by the API
 
-    while True:
-        try:
-            headers = {
-                "accept": "application/json",
-                "Authorization": f"Bearer {API_KEY}",  # Include your API key here
-                "User-Agent": "Mozilla/5.0"
-            }
-            
-            # Construct the URL for sales data with pagination
-            url = f"{BASE_API_URL}/sales"
-            logging.info(f"Requesting URL: {url} with params: {{'collectionName': '{COLLECTION_NAME}', 'limit': {limit}, 'offset': {offset}}}")
-            
-            response = requests.get(url, headers=headers, params={"collectionName": COLLECTION_NAME, "limit": limit, "offset": offset})
-            
-            if response.status_code == 404:  # Not Found
-                logging.error("Endpoint not found. Please check the URL and parameters.")
-                return None
-            
-            if response.status_code == 429:  # Rate limit exceeded
-                logging.warning("Rate limit exceeded. Waiting before retrying...")
-                time.sleep(wait_time)  # Wait for the current wait time
-                wait_time = min(wait_time * 2, 60)  # Exponentially increase wait time, max 60 seconds
-                continue  # Retry the request
-            
-            response.raise_for_status()  # Raise exception for bad status codes
-            
-            sales_batch = response.json()  # Get the sales data
-            
-            if not sales_batch:  # If no more sales data is returned, exit the loop
-                break
-            
-            sales_data.extend(sales_batch)  # Add the fetched sales data
-            
-            offset += limit  # Increment the offset for the next batch
-            
-            wait_time = 1  # Reset wait time after a successful request
-            
-        except requests.exceptions.RequestException as e:
-            logging.error(f"Error fetching sales: {e}")
-            return None
-    
-    return sales_data
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Raise an error for bad responses
+
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        # Example: Find sales data (you will need to adjust the selectors based on the actual HTML structure)
+        for item in soup.select('.some-selector'):  # Replace with the actual CSS selector for sales items
+            price = item.select_one('.price-selector').text  # Replace with the actual selector for price
+            inscription_id = item.select_one('.inscription-id-selector').text  # Replace with the actual selector for inscription ID
+            sales_data.append({
+                'price': price,
+                'inscription_id': inscription_id
+            })
+
+        return sales_data
+
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Error fetching sales data: {e}")
+        return None
 
 def get_listings():
     wait_time = 1  # Start with a 1 second wait time
@@ -171,7 +148,7 @@ def main():
     while True:
         try:
             # You can choose which function to call based on your needs
-            sales_data = fetch_sales_data()
+            sales_data = scrape_fukuhedrons_sales()
             # sales = get_listings()  # Uncomment to fetch listings
             # sales = get_activities()  # Uncomment to fetch activities
             
