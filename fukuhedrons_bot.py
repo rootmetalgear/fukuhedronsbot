@@ -17,7 +17,7 @@ TWITTER_ACCESS_TOKEN = os.environ.get('TWITTER_ACCESS_TOKEN')
 TWITTER_ACCESS_TOKEN_SECRET = os.environ.get('TWITTER_ACCESS_TOKEN_SECRET')
 
 # Magic Eden API
-BASE_API_URL = "https://api-mainnet.magiceden.dev/v2/ord"
+ME_API_URL = "https://api-mainnet.magiceden.dev/v2/ordinals/activities"
 COLLECTION_NAME = "fukuhedrons"
 
 def setup_twitter():
@@ -40,42 +40,12 @@ def get_sales():
             "User-Agent": "Mozilla/5.0"
         }
         
-        response = requests.get(f"{BASE_API_URL}/activities", headers=headers, params={"collectionName": COLLECTION_NAME, "limit": 20})
+        response = requests.get(f"{ME_API_URL}/activities", headers=headers, params={"collectionName": COLLECTION_NAME, "limit": 20})
         response.raise_for_status()  # Raise exception for bad status codes
         
         return response.json()
     except requests.exceptions.RequestException as e:
         logging.error(f"Error fetching sales: {e}")
-        return None
-
-def get_listings():
-    try:
-        headers = {
-            "accept": "application/json",
-            "User-Agent": "Mozilla/5.0"
-        }
-        
-        response = requests.get(f"{BASE_API_URL}/listings", headers=headers, params={"collectionName": COLLECTION_NAME, "type": "buyNow", "limit": 20})
-        response.raise_for_status()  # Raise exception for bad status codes
-        
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        logging.error(f"Error fetching listings: {e}")
-        return None
-
-def get_activities():
-    try:
-        headers = {
-            "accept": "application/json",
-            "User-Agent": "Mozilla/5.0"
-        }
-        
-        response = requests.get(f"{BASE_API_URL}/activities", headers=headers, params={"collectionName": COLLECTION_NAME, "limit": 20})
-        response.raise_for_status()  # Raise exception for bad status codes
-        
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        logging.error(f"Error fetching activities: {e}")
         return None
 
 def format_tweet(sale):
@@ -107,10 +77,7 @@ def main():
     
     while True:
         try:
-            # You can choose which function to call based on your needs
-            sales = get_sales()  # Fetch sales data
-            # sales = get_listings()  # Uncomment to fetch listings
-            # sales = get_activities()  # Uncomment to fetch activities
+            sales = get_sales()
             
             if sales:
                 for sale in sales:
