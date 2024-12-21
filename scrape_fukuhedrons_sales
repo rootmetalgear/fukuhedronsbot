@@ -6,7 +6,7 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def scrape_fukuhedrons_sales():
-    url = "https://magiceden.io/ordinals/marketplace/fukuhedrons"  # Replace with the actual URL of the collection
+    url = "https://magiceden.io/collection/fukuhedrons"
     sales_data = []
 
     try:
@@ -43,11 +43,14 @@ def scrape_fukuhedrons_sales():
         logging.error(f"Error fetching sales data: {e}")
         return None
 
-# Run the scraper
-if __name__ == "__main__":
+def main():
+    logging.info("Bot started! Monitoring Fukuhedrons sales...")
     sales = scrape_fukuhedrons_sales()
     if sales:
         for sale in sales:
             print(f"Type: {sale['type']}, Price: {sale['price']}, Inscription ID: {sale['inscription_id']}")
     else:
         logging.error("No sales data found or an error occurred.")
+
+if __name__ == "__main__":
+    main()
