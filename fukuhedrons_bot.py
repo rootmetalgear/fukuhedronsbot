@@ -44,6 +44,10 @@ def get_sales():
             
             response = requests.get(f"{BASE_API_URL}/sales", headers=headers, params={"collectionName": COLLECTION_NAME, "limit": 20})
             
+            if response.status_code == 404:  # Not Found
+                logging.error("Endpoint not found. Please check the URL and parameters.")
+                return None
+            
             if response.status_code == 429:  # Rate limit exceeded
                 logging.warning("Rate limit exceeded. Waiting before retrying...")
                 time.sleep(wait_time)  # Wait for the current wait time
