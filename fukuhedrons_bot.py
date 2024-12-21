@@ -36,29 +36,21 @@ def setup_twitter():
         return None
 
 def scrape_fukuhedrons_sales():
-    url = "https://magiceden.io/ordinals/marketplace/fukuhedrons"  # Replace with the actual URL of the collection
+    url = "https://magiceden.io/collection/fukuhedrons"
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # Example: Find sales data (you will need to adjust the selectors based on the actual HTML structure)
     sales_data = []
+    for item in soup.select('.some-selector'):  # Replace with the actual CSS selector for sales items
+        price = item.select_one('.price-selector').text  # Replace with the actual selector for price
+        inscription_id = item.select_one('.inscription-id-selector').text  # Replace with the actual selector for inscription ID
+        sales_data.append({
+            'price': price,
+            'inscription_id': inscription_id
+        })
 
-    try:
-        response = requests.get(url)
-        response.raise_for_status()  # Raise an error for bad responses
-
-        soup = BeautifulSoup(response.text, 'html.parser')
-
-        # Example: Find sales data (you will need to adjust the selectors based on the actual HTML structure)
-        for item in soup.select('.some-selector'):  # Replace with the actual CSS selector for sales items
-            price = item.select_one('.price-selector').text  # Replace with the actual selector for price
-            inscription_id = item.select_one('.inscription-id-selector').text  # Replace with the actual selector for inscription ID
-            sales_data.append({
-                'price': price,
-                'inscription_id': inscription_id
-            })
-
-        return sales_data
-
-    except requests.exceptions.RequestException as e:
-        logging.error(f"Error fetching sales data: {e}")
-        return None
+    return sales_data
 
 def get_listings():
     wait_time = 1  # Start with a 1 second wait time
