@@ -37,7 +37,9 @@ def setup_twitter():
 def fetch_sales_data():
     wait_time = 1  # Start with a 1 second wait time
     sales_data = []
-    
+    offset = 0  # Initialize offset for pagination
+    limit = 100  # Set the limit to the maximum allowed by the API
+
     while True:
         try:
             headers = {
@@ -46,11 +48,11 @@ def fetch_sales_data():
                 "User-Agent": "Mozilla/5.0"
             }
             
-            # Construct the URL for sales data
+            # Construct the URL for sales data with pagination
             url = f"{BASE_API_URL}/sales"
-            logging.info(f"Requesting URL: {url} with params: {{'collectionName': '{COLLECTION_NAME}', 'limit': 100}}")
+            logging.info(f"Requesting URL: {url} with params: {{'collectionName': '{COLLECTION_NAME}', 'limit': {limit}, 'offset': {offset}}}")
             
-            response = requests.get(url, headers=headers, params={"collectionName": COLLECTION_NAME, "limit": 100})
+            response = requests.get(url, headers=headers, params={"collectionName": COLLECTION_NAME, "limit": limit, "offset": offset})
             
             if response.status_code == 404:  # Not Found
                 logging.error("Endpoint not found. Please check the URL and parameters.")
@@ -64,11 +66,14 @@ def fetch_sales_data():
             
             response.raise_for_status()  # Raise exception for bad status codes
             
-            sales_data.extend(response.json())  # Add the fetched sales data
+            sales_batch = response.json()  # Get the sales data
             
-            # Check if there are more sales to fetch (if pagination is supported)
-            if len(response.json()) < 100:  # Assuming 100 is the limit set
-                break  # Exit the loop if no more sales are available
+            if not sales_batch:  # If no more sales data is returned, exit the loop
+                break
+            
+            sales_data.extend(sales_batch)  # Add the fetched sales data
+            
+            offset += limit  # Increment the offset for the next batch
             
             wait_time = 1  # Reset wait time after a successful request
             
